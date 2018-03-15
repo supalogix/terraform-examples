@@ -1,0 +1,9 @@
+version: '3'
+
+services: 
+  react-app:
+    image: react-app
+    build: 
+      context: .
+    ports:
+      - 80:8080
