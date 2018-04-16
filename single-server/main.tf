@@ -2,16 +2,20 @@ provider "aws" {
   region = "us-west-1"
 }
 
-resource "aws_instance" "stage1" {
+resource "aws_instance" "example" {
   instance_type = "t2.micro"
   ami           = "ami-07585467"
 
-  vpc_security_group_ids = ["${aws_security_group.stage1-sec-group.id}"]
+  tags = {
+    Name = "terraform example"
+  }
+
+  vpc_security_group_ids = ["${aws_security_group.example-sec-group.id}"]
 
   key_name = "us-west-1"
 
   provisioner "local-exec" {
-    command = "git archive --format=tar.gz -o app.tar.gz master app"
+    command = "tar cfz app.tar.gz app"
   }
 
   provisioner "file" {
@@ -41,14 +45,10 @@ resource "aws_instance" "stage1" {
       private_key = "${file("./us-west-1.pem")}"
     }
   }
-
-  tags {
-    Name = "stage1"
-  }
 }
 
-resource "aws_security_group" "stage1-sec-group" {
-  name = "Allow SSH"
+resource "aws_security_group" "example-sec-group" {
+  name = "Example Security Group"
 
   ingress {
     from_port   = 22
@@ -72,14 +72,10 @@ resource "aws_security_group" "stage1-sec-group" {
   }
 
   tags {
-    Name = "stage1"
+    Name = "example security group"
   }
 }
 
-resource "aws_eip" "ip" {
-  instance = "${aws_instance.stage1.id}"
-}
-
-output "ip" {
-  value = "${aws_eip.ip.public_ip}"
+output "public_dns" {
+  value = "${aws_instance.example.public_dns}"
 }
