@@ -2,6 +2,14 @@ provider "aws" {
   region = "us-west-1"
 }
 
+data "template_file" "user_data" {
+  template = "${file("user-data.sh")}"
+
+  vars {
+    private_key = "${file("secrets/private_key")}"
+  }
+}
+
 resource "aws_launch_configuration" "example" {
   instance_type = "t2.micro"
   image_id      = "ami-07585467"
@@ -10,7 +18,7 @@ resource "aws_launch_configuration" "example" {
 
   key_name = "us-west-1"
 
-  user_data = "${base64encode(file("user-data.sh"))}"
+  user_data = "${data.template_file.user_data.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -18,7 +26,7 @@ resource "aws_launch_configuration" "example" {
 }
 
 resource "aws_security_group" "example-sec-group" {
-  name = "ASG Secrity Group"
+  name = "Auto Scaling Group Secrity Group"
 
   ingress {
     from_port   = 22
@@ -98,22 +106,6 @@ resource "aws_security_group" "elb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
-#resource "aws_route53_record" "www" {
-#  zone_id = "${aws_route53_zone.primary.zone_id}"
-#  name    = "helloworld.jonathannacionales.com"
-#  type    = "A"
-#
-#  alias {
-#    name                   = "${aws_elb.example.dns_name}"
-#    zone_id                = "${aws_elb.example.zone_id}"
-#    evaluate_target_health = true
-#  }
-#}
-
-#resource "aws_route53_zone" "example" {
-#  name = "jonathannacionales.com"
-#}
 
 resource "aws_route53_record" "my-elb-cname" {
   zone_id = "ZVITZ49QALIA8"
