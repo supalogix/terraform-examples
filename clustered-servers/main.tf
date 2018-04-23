@@ -1,5 +1,41 @@
+variable "domain_name" {
+  description = "the domain name of your site"
+}
+
+variable "zone_id" {
+  description = "the zone_id in route 53"
+}
+
+variable "aws_region" {
+  description = "the aws region"
+}
+
+variable "instance_type" {
+  description = "the aws instance type"
+}
+
+variable "git_tag" {
+  description = "the git tag to pull"
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = "${var.aws_region}"
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical
 }
 
 data "template_file" "user_data" {
@@ -7,12 +43,14 @@ data "template_file" "user_data" {
 
   vars {
     private_key = "${file("secrets/private_key")}"
+    git_tag     = "${var.git_tag}"
   }
 }
 
 resource "aws_launch_configuration" "example" {
-  instance_type = "t2.micro"
-  image_id      = "ami-07585467"
+  instance_type = "${var.instance_type}"
+
+  image_id = "${data.aws_ami.ubuntu.id}"
 
   security_groups = ["${aws_security_group.example-sec-group.id}"]
 
@@ -108,8 +146,10 @@ resource "aws_security_group" "elb" {
 }
 
 resource "aws_route53_record" "my-elb-cname" {
-  zone_id = "ZVITZ49QALIA8"
-  name    = "helloworld.jonathannacionales.com"
+  zone_id = "${var.zone_id}"
+
+  name = "staging.helloworld.${var.domain_name}"
+
   type    = "CNAME"
   ttl     = "300"
   records = ["${aws_elb.example.dns_name}"]

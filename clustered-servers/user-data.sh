@@ -11,5 +11,5 @@ cd /home/ubuntu
 git init
 echo "${private_key}" > private_key
 git remote add origin https://github.com/supalogix/node-hello-world.git
-git pull origin master
-docker-compose up -d
+git pull origin ${git_tag}
+sudo docker-compose up -d
