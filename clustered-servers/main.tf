@@ -1,23 +1,3 @@
-variable "domain_name" {
-  description = "the domain name of your site"
-}
-
-variable "zone_id" {
-  description = "the zone_id in route 53"
-}
-
-variable "aws_region" {
-  description = "the aws region"
-}
-
-variable "instance_type" {
-  description = "the aws instance type"
-}
-
-variable "git_tag" {
-  description = "the git tag to pull"
-}
-
 provider "aws" {
   region = "${var.aws_region}"
 }
@@ -43,7 +23,7 @@ data "template_file" "user_data" {
 
   vars {
     private_key = "${file("secrets/private_key")}"
-    git_tag     = "${var.git_tag}"
+    git_tag     = "master"
   }
 }
 
@@ -153,8 +133,4 @@ resource "aws_route53_record" "my-elb-cname" {
   type    = "CNAME"
   ttl     = "300"
   records = ["${aws_elb.example.dns_name}"]
-}
-
-output "dns_name" {
-  value = "${aws_elb.example.dns_name}"
 }
