@@ -13,3 +13,15 @@ variable "aws_region" {
 variable "instance_type" {
   description = "the aws instance type"
 }
+
+variable "key_name" {
+  description = "key name"
+}
+
+variable "log_group_name" {
+  description = "the log group name"
+}
+
+variable "log_retention_days" {
+  description = "log retention days"
+}

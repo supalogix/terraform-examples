@@ -10,6 +10,9 @@ sudo chmod +x /usr/local/bin/docker-compose
 cd /home/ubuntu
 git init
 echo "${private_key}" > private_key
+echo export AWS_ACCESS_KEY_ID="${aws_access_key_id}" >> /etc/profile
+echo export AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" >> /etc/profile
 git remote add origin https://github.com/supalogix/node-hello-world.git
 git pull origin ${git_tag}
-sudo docker-compose up -d
+export HOSTNAME=$(cat /etc/hostname)
+sudo -E docker-compose -f docker-compose.prod.yml up -d

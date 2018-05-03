@@ -22,8 +22,10 @@ data "template_file" "user_data" {
   template = "${file("user-data.sh")}"
 
   vars {
-    private_key = "${file("secrets/private_key")}"
-    git_tag     = "master"
+    private_key           = "${file("secrets/private_key")}"
+    git_tag               = "master"
+    aws_access_key_id     = "${aws_iam_access_key.logs.id}"
+    aws_secret_access_key = "${aws_iam_access_key.logs.secret}"
   }
 }
 
@@ -35,6 +37,9 @@ resource "aws_launch_configuration" "example" {
   security_groups = ["${aws_security_group.example-sec-group.id}"]
 
   key_name = "us-west-1"
+  key_name = "${var.key_name}"
+
+  iam_instance_profile = "ec2-instance-profile"
 
   user_data = "${data.template_file.user_data.rendered}"
 
@@ -133,4 +138,55 @@ resource "aws_route53_record" "my-elb-cname" {
   type    = "CNAME"
   ttl     = "300"
   records = ["${aws_elb.example.dns_name}"]
+}
+
+resource "aws_cloudwatch_log_group" "docker_logs" {
+  name              = "${var.log_group_name}"
+  retention_in_days = "${var.log_retention_days}"
+}
+
+resource "aws_iam_user" "logs" {
+  name = "logs"
+  path = "/apps/"
+}
+
+resource "aws_iam_access_key" "logs" {
+  user = "${aws_iam_user.logs.name}"
+}
+
+resource "aws_iam_user_policy_attachment" "logs_cloudwatch_full" {
+  user       = "${aws_iam_user.logs.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+resource "aws_iam_role" "ec2-cloudwatch" {
+  name = "ec2-cloudwatch-poc"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": [
+          "ec2.amazonaws.com"
+        ]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name  = "ec2-instance-profile"
+  roles = ["ec2-cloudwatch-poc"]
+}
+
+resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attachment" {
+  role       = "${aws_iam_role.ec2-cloudwatch.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
