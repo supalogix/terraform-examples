@@ -36,7 +36,6 @@ resource "aws_launch_configuration" "example" {
 
   security_groups = ["${aws_security_group.example-sec-group.id}"]
 
-  key_name = "us-west-1"
   key_name = "${var.key_name}"
 
   iam_instance_profile = "ec2-instance-profile"
